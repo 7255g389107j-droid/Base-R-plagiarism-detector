@@ -1,6 +1,11 @@
 # Base-R-plagiarism-detector
 A mathematically rigorous text similarity and plagiarism detection engine implemented purely in Base R without external dependencies.
 
+## 
+Developed by: **Tatsuki Itagaki**  
+Copyright (c) 2026 Tatsuki Itagaki  
+License: **MIT License**
+
 ## Security & Data Privacy (Zero Data Leakage Risk)
 
 Unlike modern LLM-based plagiarism checkers or cloud-based SaaS solutions, this engine offers **absolute data privacy and zero risk of information leakage**. 
@@ -8,10 +13,6 @@ Unlike modern LLM-based plagiarism checkers or cloud-based SaaS solutions, this 
 - **100% Local Execution**: All computations are performed strictly in your local R environment. Your sensitive documents, proprietary research, or internal source codes are never sent to external servers or third-party APIs.
 - **No Internet Required**: Because the algorithms rely exclusively on native Base R mathematical functions, the entire system can operate safely inside air-gapped networks or secure enterprise environments.
 - **No Data Retention**: Texts are processed entirely in volatile memory (RAM) and immediately garbage-collected after evaluation. No temporary files or caches are written to the disk.
-  
-Developed by: **Tatsuki Itagaki**  
-Copyright (c) 2026 Tatsuki Itagaki  
-License: **MIT License**
 
 ## Overview
 
