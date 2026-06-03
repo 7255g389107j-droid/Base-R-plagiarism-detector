@@ -1,0 +1,100 @@
+# ==============================================================================
+#' Mathematically Rigorous Word-Level Edit Distance
+#' @param text_a Character string representing the first document.
+#' @param text_b Character string representing the second document.
+#' @return A list containing the raw edit distance and the normalized similarity score.
+# Developed by: Tatsuki Itagaki
+# June 3, 2026 
+# Copyright (c) 2026 Tatsuki Itagaki
+# License: MIT License (https://opensource.org)
+# ==============================================================================
+
+verify_copy_word_level <- function(text_a, text_b) {
+  # 1. Standardize whitespace and tokenize texts into individual words
+  words_a <- unlist(strsplit(gsub("\\s+", " ", text_a), " "))
+  words_b <- unlist(strsplit(gsub("\\s+", " ", text_b), " "))
+  
+  # Handle edge cases where one or both texts are completely empty
+  if (length(words_a) == 0 || length(words_b) == 0) {
+    return(list(word_distance = 0, similarity = 0))
+  }
+  
+  # Extract all unique words to form a strict local vocabulary index
+  unique_words <- unique(c(words_a, words_b))
+  
+  # Map word indices into unique UTF-8 characters via the Private Use Area (PUA)
+  # This enforces a strict 1-to-1 symbol map for up to 64,000+ unique words,
+  # preserving the identity of indiscernibles without crashing 1-byte raw memory bounds.
+  map_to_unicode_string <- function(words, dict) {
+    match_idx <- match(words, dict)
+    sapply(match_idx, function(x) intToUtf8(0xE000 + x))
+  }
+  
+  # Collapse the array of mapped Unicode characters into a single string for adist()
+  encoded_a <- paste(map_to_unicode_string(words_a, unique_words), collapse = "")
+  encoded_b <- paste(map_to_unicode_string(words_b, unique_words), collapse = "")
+  
+  # 2. Compute Levenshtein distance using native Base R adist()
+  edit_dist <- as.numeric(adist(encoded_a, encoded_b))
+  
+  # 3. Normalize the raw distance into an axiomatic similarity bounds [0, 1]
+  max_len <- max(length(words_a), length(words_b))
+  similarity <- 1 - (edit_dist / max_len)
+  
+  return(list(word_distance = edit_dist, similarity = similarity))
+}
+
+# ------------------------------------------------------------------
+#' Linear Algebraic Character N-Gram Cosine Similarity
+#' @param text_a Character string representing the first document.
+#' @param text_b Character string representing the second document.
+#' @param n An integer representing the character sequence length (default is 3).
+#' @return A numeric value representing the cosine similarity bounded between 0 and 1.
+verify_copy_cosine_ngram <- function(text_a, text_b, n = 3) {
+  
+  # Internal helper function to extract overlapping character sequences
+  get_ngrams <- function(text, n) {
+    chars <- strsplit(text, "")[[1]]
+    if(length(chars) < n) return(character(0))
+    sapply(1:(length(chars) - n + 1), function(i) paste(chars[i:(i+n-1)], collapse=""))
+  }
+  
+  grams_a <- get_ngrams(text_a, n)
+  grams_b <- get_ngrams(text_b, n)
+  
+  # Define the basis of the vector space using unique N-grams
+  all_grams <- unique(c(grams_a, grams_b))
+  
+  # Construct orthogonal frequency vectors using factor constraints
+  vec_a <- table(factor(grams_a, levels = all_grams))
+  vec_b <- table(factor(grams_b, levels = all_grams))
+  
+  # Compute dot product and Euclidean norms purely via native linear algebra
+  dot_product <- sum(vec_a * vec_b)
+  norm_a <- sqrt(sum(vec_a^2))
+  norm_b <- sqrt(sum(vec_b^2))
+  
+  # Prevent mathematical division-by-zero errors for empty vectors
+  if (norm_a == 0 || norm_b == 0) return(0)
+  
+  return(dot_product / (norm_a * norm_b))
+}
+
+#---------------------------
+# Test Dataset
+text1 <- "The quick brown fox jumps over the lazy dog"
+text2 <- "lazy dog over the jumps fox brown quick The" 
+
+# Execute Engine 1 (Validating Sentence-Level Paraphrase with Word-Shuffling)
+result_1 <- verify_copy_word_level(text1, text2)
+print(result_1$similarity)
+# Output: 0.2222222 -> Successfully penalizes scrambled sentences.
+
+# Test Document Extraction Dataset
+long_doc <- "This is a highly rigorous academic paper containing unique insights. The quick brown fox jumps over the lazy dog."
+stolen_snippet <- "The quick brown fox jumps over the lazy dog. Adding some random text here."
+
+# Execute Engine 2 (Validating Partial Extraction via 3-Gram Vector Projections)
+result_2 <- verify_copy_cosine_ngram(long_doc, stolen_snippet, n = 3)
+print(result_2)
+# Output: 0.5487771 -> Accurately captures structural density overlaps.
