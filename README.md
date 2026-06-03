@@ -76,15 +76,18 @@ Standard 1-gram bag-of-words models suffer from severe anagram vulnerabilities. 
 
 ```R
 # Source code available in R/verify_copy_cosine_ngram.R
+# Source code available in R/verify_copy_cosine_ngram.R
 verify_copy_cosine_ngram <- function(text_a, text_b, n = 3) {
   get_ngrams <- function(text, n) {
-    chars <- strsplit(text, "")[]
+    chars <- unlist(strsplit(text, ""))
     if(length(chars) < n) return(character(0))
     sapply(1:(length(chars) - n + 1), function(i) paste(chars[i:(i+n-1)], collapse=""))
   }
   
   grams_a <- get_ngrams(text_a, n)
   grams_b <- get_ngrams(text_b, n)
+  
+  if (length(grams_a) == 0 || length(grams_b) == 0) return(0)
   
   all_grams <- unique(c(grams_a, grams_b))
   
@@ -97,7 +100,7 @@ verify_copy_cosine_ngram <- function(text_a, text_b, n = 3) {
   
   if (norm_a == 0 || norm_b == 0) return(0)
   
-  return(dot_product / (norm_a * norm_b))
+  return(as.numeric(dot_product / (norm_a * norm_b)))
 }
 ```
 
