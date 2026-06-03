@@ -22,97 +22,29 @@ This repository provides two distinct, mathematically sound approaches to text c
 
 ## Features
 
-- **Zero External Dependencies**: Built entirely using native R functions (`adist`, `strsplit`, `matrix operations`).
+- **Zero External Dependencies**: Built entirely using native R functions (`adist`, `strsplit`, `intToUtf8`, `matrix operations`).
 - **Axiomatic Integrity**: Prevents mathematical "hallucinations" (such as anagrams or structural dilution) that occur in naive similarity packages.
 - **Dual-Engine Design**: Optimized separately for **Whole-Text Paraphrasing** and **Partial Text Extraction**.
+
+The screening logic optimizes auditing by categorizing text into three layers: automated rejection of direct matches (Layer 1; Whole-Text Paraphrasing), review of standard domain jargon (Layer 2; Partial Text Extraction), and intense human audit for high-level paraphrasing deception (Layer 3; Passed both). By reducing cognitive load, this approach directs human expertise toward identifying sophisticated, non-literal plagiarism.
 
 ---
 
 ## 1. Word-Level Edit Distance (Whole-Text Plagiarism)
 
-This engine tokenizes text into discrete word units and maps them to a strict, single-byte character space before applying graph-theoretic Levenshtein distance (`adist`). 
+This engine tokenizes text into discrete word units and maps them to unique UTF-8 Unicode characters via the Private Use Area (`U+E000` onwards) before applying graph-theoretic Levenshtein distance (`adist`). 
 
 ### Why it is mathematically sound:
-It perfectly satisfies all metric space axioms (Identity of Indiscernibles, Symmetry, and Triangle Inequality). By treating words rather than letters as the atomic units, it remains computationally efficient while successfully punishing word-shuffling counter-measures.
+It perfectly satisfies all metric space axioms (Identity of Indiscernibles, Symmetry, and Triangle Inequality). By mapping word IDs into discrete Unicode points, it allows vocabulary sizes up to **64,000+ unique words** without crashing on memory boundaries or raw `nul` character constraints. It successfully identifies and punishes word-shuffling counter-measures.
 
 ```R
 # Source code available in R/verify_copy_word_level.R
-verify_copy_word_level <- function(text_a, text_b) {
-  words_a <- unlist(strsplit(gsub("\\s+", " ", text_a), " "))
-  words_b <- unlist(strsplit(gsub("\\s+", " ", text_b), " "))
-  
-  unique_words <- unique(c(words_a, words_b))
-  
-  map_to_char <- function(words, dict) {
-    match_idx <- match(words, dict)
-    rawToChar(as.raw(match_idx + 32))
-  }
-  
-  encoded_a <- map_to_char(words_a, unique_words)
-  encoded_b <- map_to_char(words_b, unique_words)
-  
-  edit_dist <- as.numeric(adist(encoded_a, encoded_b))
-  max_len <- max(length(words_a), length(words_b))
-  similarity <- 1 - (edit_dist / max_len)
-  
-  return(list(word_distance = edit_dist, similarity = similarity))
-}
-```
+verify_copy_word_level  Successfully penalizes scrambled sentences.
 
----
-
-## 2. Character N-Gram Cosine Similarity (Partial Plagiarism)
-
-This engine breaks sentences down into overlapping sequences of $N$ characters (default $N=3$) and applies linear algebraic cosine operations to evaluate structural density.
-
-### Why it is mathematically sound:
-Standard 1-gram bag-of-words models suffer from severe anagram vulnerabilities. By enforcing a strict local sequence constraint ($N \ge 3$), this implementation eliminates the mathematical loophole where different sentences generate identical vector representations. It isolates exact stolen segments from vastly larger documents without score dilution.
-
-```R
-# Source code available in R/verify_copy_cosine_ngram.R
-verify_copy_cosine_ngram <- function(text_a, text_b, n = 3) {
-  get_ngrams <- function(text, n) {
-    chars <- strsplit(text, "")[]
-    if(length(chars) < n) return(character(0))
-    sapply(1:(length(chars) - n + 1), function(i) paste(chars[i:(i+n-1)], collapse=""))
-  }
-  
-  grams_a <- get_ngrams(text_a, n)
-  grams_b <- get_ngrams(text_b, n)
-  
-  all_grams <- unique(c(grams_a, grams_b))
-  
-  vec_a <- table(factor(grams_a, levels = all_grams))
-  vec_b <- table(factor(grams_b, levels = all_grams))
-  
-  dot_product <- sum(vec_a * vec_b)
-  norm_a <- sqrt(sum(vec_a^2))
-  norm_b <- sqrt(sum(vec_b^2))
-  
-  if (norm_a == 0 || norm_b == 0) return(0)
-  
-  return(dot_product / (norm_a * norm_b))
-}
-```
-
----
-
-## Usage & Validation
-
-```R
-# Case A: Testing Sentence-Level Copying with Word Shuffling
-text1 <- "The quick brown fox jumps over the lazy dog"
-text2 <- "lazy dog over the jumps fox brown quick The" 
-
-verify_copy_word_level(text1, text2)\$similarity
-# [1] ~0.22 -> Successfully identifies the scramble and drops the score.
-
-# Case B: Testing Partial Plagiarism (Extracting one phrase out of a long paper)
-long_doc <- "This is a highly rigorous academic paper containing unique insights. The quick brown fox jumps over the lazy dog."
-stolen_snippet <- "The quick brown fox jumps over the lazy dog. Adding some random text here."
-
-verify_copy_cosine_ngram(long_doc, stolen_snippet, n = 3)
-# [1] ~0.55 -> Accurately flags density overlaps despite the mismatched document lengths.
+# Execute Engine 2 (Validating Domain / Shared Structural Density)
+result_2 <- verify_copy_cosine_ngram(text1, text2, n = 3)
+print(result_2)
+# Output: 0.5816158 -> Catches the heavy 3-gram sequence density overlap.
 ```
 
 ## License
