@@ -112,7 +112,7 @@ text2 <- "lazy dog over the jumps fox brown quick The"
 
 # Execute Engine 1 (Validating Sentence-Level Paraphrase with Word-Shuffling)
 result_1 <- verify_copy_word_level(text1, text2)
-print(result_1\$similarity)
+print(result_1$similarity)
 # Output: 0.08878505 -> Successfully penalizes scrambled sentences.
 
 # Execute Engine 2 (Validating Domain / Shared Structural Density)
