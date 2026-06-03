@@ -1,7 +1,7 @@
 # Base-R-plagiarism-detector
 A mathematically rigorous text similarity and plagiarism detection engine implemented purely in Base R without external dependencies.
 
-## 
+## Authorship & License
 Developed by: **Tatsuki Itagaki**  
 Copyright (c) 2026 Tatsuki Itagaki  
 License: **MIT License**
