@@ -113,12 +113,16 @@ text2 <- "lazy dog over the jumps fox brown quick The"
 # Execute Engine 1 (Validating Sentence-Level Paraphrase with Word-Shuffling)
 result_1 <- verify_copy_word_level(text1, text2)
 print(result_1$similarity)
-# Output: 0.08878505 -> Successfully penalizes scrambled sentences.
+# Output: 0.1111111 -> Successfully penalizes scrambled sentences.
 
-# Execute Engine 2 (Validating Domain / Shared Structural Density)
-result_2 <- verify_copy_cosine_ngram(text1, text2, n = 3)
+# Test Document Extraction Dataset
+long_doc <- "This is a highly rigorous academic paper containing unique insights. The quick brown fox jumps over the lazy dog."
+stolen_snippet <- "The quick brown fox jumps over the lazy dog. Adding some random text here."
+
+# Execute Engine 2 (Validating Partial Extraction via 3-Gram Vector Projections)
+result_2 <- verify_copy_cosine_ngram(long_doc, stolen_snippet, n = 3)
 print(result_2)
-# Output: 0.5816158 -> Catches the heavy 3-gram sequence density overlap.
+# Output: 0.4966945 -> Accurately captures structural density overlaps.
 ```
 
 ## License
