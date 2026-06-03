@@ -1,3 +1,10 @@
+# ==============================================================================
+# Developed by: Tatsuki Itagaki
+# June 3, 2026 
+# Copyright (c) 2026 Tatsuki Itagaki
+# License: MIT License (https://opensource.org)
+# ==============================================================================
+
 # A function to compute exact Cosine Similarity using character N-grams
 verify_copy_cosine_ngram <- function(text_a, text_b, n = 3) {
   
